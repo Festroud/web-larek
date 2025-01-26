@@ -1,20 +1,36 @@
 // Интерфейс для данных заказа
 interface IOrderData {
-  orderId: string;
-  items: Array<{ id: string; quantity: number }>;
-  totalPrice: number;
-  customerDetails: {
-    name: string;
-    email: string;
-    phone: string;
-  }; 
-  shippingAddress: {
-    street: string;
-    city: string;
-    postalCode: string;
-    country: string;
+  order: {
+    // Список товаров с указанием их идентификаторов и количества
+    items: Array<{ 
+      productId: string;  // Идентификатор продукта
+      quantity: number;   // Количество товара
+    }>;
+
+    // Данные клиента
+    customer: { 
+      name: string;    // Имя клиента
+      email: string;   // e-mail клиента
+      phone: string;   // Телефон клиента
+    };
+
+    // Данные доставки
+    delivery: { 
+      address: string;   // Адрес доставки
+      city: string;      // Город
+      postalCode: string; // Почтовый индекс
+      country: string;   // Страна
+    };
+
+    // Метод оплаты
+    paymentMethod: string;
+
+    // Общая сумма заказа
+    total: number;
   };
 }
+
+
 
 
 interface IBaseCard {
@@ -52,23 +68,50 @@ interface IBasket extends IBaseBasket {
 }
 
 
-// Заказ (Order)
-interface IOrder {
-  items: IBasketItem[];
-  paymentMethod: 'online' | 'cash';
-  deliveryAddress: string;
-  email: string;
-  phone: string;
-
-  // Метод для оформления заказа
-  placeOrder(): void;
-
-  // Метод для валидации данных заказа
-  validate(): void;
-
-  // Генерация ошибок при валидации
-  getValidationErrors(): string[];
+interface IContactInfo {
+  payment?: 'online' | 'cash'; // Способ оплаты
+  address?: string; // Адрес доставки
+  email?: string; // e-mail
+  phone?: string; // Телефон
 }
+
+type TFormErrors = Partial<Record<keyof IContactInfo, string>>;
+
+interface IOrder {
+  items: IBasketItem[]; // Список товаров
+  contactInfo: IContactInfo; // Контактная информация
+
+  /**
+   * Установка контактной информации.
+   * Можно передавать частичные данные для обновления.
+   * @param info - Данные, которые нужно установить
+   */
+  setContactInfo(info: Partial<IContactInfo>): void;
+  /**
+   * Проверка валидности контактной информации.
+   * @returns true, если все данные валидны; иначе false.
+   */
+  validateContactInfo(): boolean;
+  /**
+   * Получение ошибок валидации.
+   * Возвращает объект, где ключи соответствуют полям `IContactInfo`,
+   * а значения содержат описание ошибок.
+   * @returns Объект ошибок
+   */
+  getValidationErrors(): TFormErrors;
+  /**
+   * Получение полной информации о заказе.
+   * Возвращает объект, содержащий список товаров и контактные данные.
+   * @returns Объект заказа
+   */
+  getOrderLot(): { items: IBasketItem[]; contactInfo: IContactInfo };
+  /**
+   * Оформление заказа.
+   * Проверяет валидность данных перед завершением.
+   */
+  placeOrder(): void;
+}
+
 
 // UI КОМПОНЕНТЫ
 
@@ -123,18 +166,30 @@ interface IModal {
   close(): void; // Закрытие модального окна
 }
 
-// Модальное окно статуса заказа (OrderStatusModal) - расширяет IModal
-interface IOrderStatusModal extends IModal {
+interface IOrderStatusModal {
   /**
-   * Отображение успешного статуса заказа
-   * @param orderId - уникальный идентификатор заказа
-   * @param totalAmount - итоговая сумма заказа
+   * Открытие модального окна с переданным содержимым.
+   * @param view - Контент, который нужно показать внутри модального окна.
+   */
+  open(view: HTMLElement): void;
+
+  /**
+   * Закрытие модального окна.
+   */
+  close(): void;
+
+  /**
+   * Отображение успешного статуса заказа.
+   * @param orderId - Уникальный идентификатор заказа.
+   * @param totalAmount - Итоговая сумма заказа.
+   * @returns HTML-элемент, представляющий успешный статус заказа.
    */
   renderSuccess(orderId: string, totalAmount: number): HTMLElement;
 
   /**
-   * Отображение ошибки выполнения заказа
-   * @param errorMessage - текст сообщения об ошибке
+   * Отображение ошибки выполнения заказа.
+   * @param errorMessage - Текст сообщения об ошибке.
+   * @returns HTML-элемент, представляющий ошибку выполнения заказа.
    */
   renderFailure(errorMessage: string): HTMLElement;
 }
