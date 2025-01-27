@@ -1,37 +1,14 @@
 // Интерфейс для данных заказа
+type PaymentMethod = 'online' | 'offline';
+
 interface IOrderData {
-  order: {
-    // Список товаров с указанием их идентификаторов и количества
-    items: Array<{ 
-      productId: string;  // Идентификатор продукта
-      quantity: number;   // Количество товара
-    }>;
-
-    // Данные клиента
-    customer: { 
-      name: string;    // Имя клиента
-      email: string;   // e-mail клиента
-      phone: string;   // Телефон клиента
-    };
-
-    // Данные доставки
-    delivery: { 
-      address: string;   // Адрес доставки
-      city: string;      // Город
-      postalCode: string; // Почтовый индекс
-      country: string;   // Страна
-    };
-
-    // Метод оплаты
-    paymentMethod: string;
-
-    // Общая сумма заказа
-    total: number;
-  };
+    payment: PaymentMethod; 
+    email: string; 
+    phone: string; 
+    address: string; 
+    total: number; 
+    items: string[];
 }
-
-
-
 
 interface IBaseCard {
   id: string;
@@ -66,7 +43,6 @@ interface IBasket extends IBaseBasket {
   removeItem(productId: string): void;
   clearBasket(): void;
 }
-
 
 interface IContactInfo {
   payment?: 'online' | 'cash'; // Способ оплаты
@@ -111,7 +87,6 @@ interface IOrder {
    */
   placeOrder(): void;
 }
-
 
 // UI КОМПОНЕНТЫ
 
