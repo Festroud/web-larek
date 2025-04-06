@@ -1,184 +1,131 @@
-// Интерфейс для данных заказа
-type PaymentMethod = 'online' | 'offline';
+// Типы для оплаты и категорий товара
+export type PaymentMethod = 'online' | 'offline';
+export type ProductCategory = 'soft' | 'hard' | 'other' | 'additional' | 'button';
 
-interface IOrderData {
-    payment: PaymentMethod; 
-    email: string; 
-    phone: string; 
-    address: string; 
-    total: number; 
-    items: string[];
-}
-
-interface IBaseCard {
+// Интерфейс товара
+export interface IProductItem {
   id: string;
   title: string;
   price: number | null;
-}
-
-// Товар (Card), расширяет IBaseCard
-interface ICard extends IBaseCard {
-  category: string;
-  description: string;
   image: string;
+  category?: ProductCategory;
+  description?: string;
 }
 
-// Элемент корзины (BasketItem)
-interface IBasketItem {
-  product: ICard;
+// Расширенный интерфейс карточки товара
+export interface ICard extends IProductItem {
+  selected?: boolean;
+}
+
+// Интерфейс для данных заказа
+export interface IOrderData {
+  payment: PaymentMethod;
+  email: string;
+  phone: string;
+  address: string;
+  total?: number;
+  items?: string[];
+  contactInfo: IContactInfo; // Добавляем явное объявление
+}
+
+// Элемент корзины
+export interface IBasketItem {
+  product: IProductItem;
   quantity: number;
 }
 
-// Базовый интерфейс для корзины
-interface IBaseBasket {
+// Интерфейс контактной информации
+export interface IContactInfo {
+  payment?: PaymentMethod;
+  address?: string;
+  email?: string;
+  phone?: string;
+}
+
+// Интерфейс данных заказа (расширенный)
+export interface IOrderData extends IContactInfo {
+  total?: number;
+  items?: string[];
+}
+
+// Интерфейс статуса заказа
+export interface IOrderResult {
+  orderId: string;
+  status: string;
+  message: string;
+}
+
+// Интерфейс для действий с карточкой товара
+export interface ICardActions {
+  onClick?: (event: MouseEvent) => void;
+  onAddToBasket?: () => void;
+}
+
+// Интерфейс ошибок заказа
+export interface IOrderErrors {
+  payment?: string;
+  address?: string;
+}
+
+// Интерфейс ошибок контактных данных
+export interface IContactsErrors {
+  email?: string;
+  phone?: string;
+}
+
+// Ошибки формы
+export type TFormErrors = Partial<Record<keyof IContactInfo, string>>;
+
+// Интерфейс корзины
+export interface IBasket {
+  items: IBasketItem[];
   totalPrice: number;
+
+  addItem(product: IProductItem): void;
+  removeItem(productId: string): void;
+  clearBasket(): void;
   calculateTotal(): number;
 }
 
-// Корзина (Basket), расширяет IBaseBasket
-interface IBasket extends IBaseBasket {
+// Интерфейс заказа
+export interface IOrder {
   items: IBasketItem[];
+  contactInfo: IContactInfo;
 
-  addItem(product: ICard): void;
-  removeItem(productId: string): void;
-  clearBasket(): void;
-}
-
-interface IContactInfo {
-  payment?: 'online' | 'cash'; // Способ оплаты
-  address?: string; // Адрес доставки
-  email?: string; // e-mail
-  phone?: string; // Телефон
-}
-
-type TFormErrors = Partial<Record<keyof IContactInfo, string>>;
-
-interface IOrder {
-  items: IBasketItem[]; // Список товаров
-  contactInfo: IContactInfo; // Контактная информация
-
-  /**
-   * Установка контактной информации.
-   * Можно передавать частичные данные для обновления.
-   * @param info - Данные, которые нужно установить
-   */
   setContactInfo(info: Partial<IContactInfo>): void;
-  /**
-   * Проверка валидности контактной информации.
-   * @returns true, если все данные валидны; иначе false.
-   */
   validateContactInfo(): boolean;
-  /**
-   * Получение ошибок валидации.
-   * Возвращает объект, где ключи соответствуют полям `IContactInfo`,
-   * а значения содержат описание ошибок.
-   * @returns Объект ошибок
-   */
   getValidationErrors(): TFormErrors;
-  /**
-   * Получение полной информации о заказе.
-   * Возвращает объект, содержащий список товаров и контактные данные.
-   * @returns Объект заказа
-   */
   getOrderLot(): { items: IBasketItem[]; contactInfo: IContactInfo };
-  /**
-   * Оформление заказа.
-   * Проверяет валидность данных перед завершением.
-   */
   placeOrder(): void;
 }
 
-// UI КОМПОНЕНТЫ
+// UI компоненты
 
-// Интерфейс для галереи товаров
-interface IGallery {
-  setProducts(productElements: HTMLElement[]): void;
-  render(): void;
-  onProductClick(productId: string): void;
+// Интерфейс для успешного сообщения
+export interface ISuccess {
+  success: HTMLElement;
+  description: HTMLElement;
+  button: HTMLButtonElement;
+  render(total: number): HTMLElement;
 }
 
-// Реализация галереи
-class Gallery implements IGallery {
-  private container: HTMLElement;
-  private products: HTMLElement[] = [];
-  private onPreviewOpen: (productId: string) => void;
-
-  constructor(containerSelector: string, onPreviewOpen: (productId: string) => void) {
-    this.container = document.querySelector(containerSelector) as HTMLElement;
-    this.onPreviewOpen = onPreviewOpen;
-  }
-
-  // Установка элементов для галереи
-  setProducts(productElements: HTMLElement[]): void {
-    this.products = productElements;
-    this.render();
-  }
-
-  // Отображение элементов на странице
-  render(): void {
-    this.container.innerHTML = ''; // Очищаем контейнер перед добавлением новых элементов
-    this.products.forEach((productElement) => this.container.appendChild(productElement));
-  }
-
-  // Обработка клика на продукт
-  onProductClick(productId: string): void {
-    this.onPreviewOpen(productId); // Вызываем функцию открытия превью
-  }
-}
-
-
-// Шапка сайта (Header)
-interface IHeader {
-  logo: HTMLImageElement;
-  basketButton: HTMLButtonElement;
-  basketCounter: HTMLSpanElement;
-  updateBasketCounter(count: number): void;
-}
-
-// Модальное окно (Modal)
-interface IModal {
-  open(content: HTMLElement): void; // Открытие модального окна с переданным контентом
-  close(): void; // Закрытие модального окна
-}
-
-interface IOrderStatusModal {
-  /**
-   * Открытие модального окна с переданным содержимым.
-   * @param view - Контент, который нужно показать внутри модального окна.
-   */
-  open(view: HTMLElement): void;
-
-  /**
-   * Закрытие модального окна.
-   */
+// Интерфейс для модального окна
+export interface IModal {
+  open(): void;
   close(): void;
-
-  /**
-   * Отображение успешного статуса заказа.
-   * @param orderId - Уникальный идентификатор заказа.
-   * @param totalAmount - Итоговая сумма заказа.
-   * @returns HTML-элемент, представляющий успешный статус заказа.
-   */
-  renderSuccess(orderId: string, totalAmount: number): HTMLElement;
-
-  /**
-   * Отображение ошибки выполнения заказа.
-   * @param errorMessage - Текст сообщения об ошибке.
-   * @returns HTML-элемент, представляющий ошибку выполнения заказа.
-   */
-  renderFailure(errorMessage: string): HTMLElement;
+  render(): HTMLElement
 }
 
+// Система событий
 
-// СОБЫТИЯ
-
-// Брокер событий (EventBus)
-interface IEventBus {
+// Интерфейс для системы событий
+export interface IEventBus {
   on<T>(event: string, callback: (data: T) => void): void;
   emit<T>(event: string, data?: T): void;
 }
 
-class EventBus implements IEventBus {
+// Реализация системы событий
+export class EventBus implements IEventBus {
   private events: Map<string, Function[]> = new Map();
 
   on<T>(event: string, callback: (data: T) => void): void {
@@ -189,7 +136,11 @@ class EventBus implements IEventBus {
   }
 
   emit<T>(event: string, data?: T): void {
-    this.events.get(event)?.forEach((callback) => callback(data!));
+    this.events.get(event)?.forEach(callback => callback(data));
   }
 }
 
+// Интерфейс для действий пользователя
+export interface IActions {
+  onClick?: (event: MouseEvent) => void;
+}
